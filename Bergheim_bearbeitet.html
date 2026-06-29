@@ -1,0 +1,506 @@
+Hier ist dein kompletter Code, in dem auch der kleine Fehler im Quiz-Bereich (wo der Code doppelt war und ein paar Zeichenfehler hatte) korrigiert wurde.
+
+Wenn du diesen Code als **`index.html`** speicherst und zusammen mit deinem **`images`**-Ordner hochlädst (wie oben beschrieben), funktioniert alles perfekt!
+
+```html
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<title>Bergheim Vergleichskarte — Damals & Heute</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+/* Basis - Historischer Look */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  background-color: #e9e3d3; /* Heller Pergament-Ton */
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #2c1e16; /* Dunkles Braun statt Schwarz */
+}
+
+/* Popups im Vintage-Stil */
+.leaflet-popup-content-wrapper {
+  background: #fdfaf3;
+  color: #2c1e16;
+  border-radius: 4px;
+  border: 1px solid #8b5a2b;
+  box-shadow: 0 4px 10px rgba(44, 30, 22, 0.4);
+}
+.leaflet-popup-tip {
+  background: #fdfaf3;
+}
+.popup-container { width: 340px; }
+.popup-container h4 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  border-bottom: 1px solid #d4af37;
+  padding-bottom: 5px;
+  color: #4e342e;
+}
+.popup-compare { display: flex; gap: 8px; justify-content: space-between; }
+.compare-col { width: 48%; text-align: center; }
+.compare-img {
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #a68a6d;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 4px;
+  object-fit: cover;
+  height: 120px; 
+}
+.single-compare { text-align: center; }
+.single-img {
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #a68a6d;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  object-fit: cover;
+  height: 170px;
+}
+.caption { font-size: 12px; font-weight: bold; color: #5d4037; font-style: italic; }
+.desc { margin-top: 10px; font-size: 13px; color: #2c1e16; line-height: 1.4; }
+.credit { margin-top: 8px; font-size: 11px; color: #795548; }
+
+@media(max-width:480px){
+  .popup-compare { flex-direction: column; }
+  .compare-col { width: 100%; }
+  .compare-img { height: auto; }
+}
+
+/* ===== Navbar (Edle Holz/Messing-Optik) ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(90deg, #2c1e16 0%, #4e342e 50%, #2c1e16 100%);
+  border-bottom: 2px solid #d4af37; /* Goldener Strich */
+  color: #fdfaf3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+  z-index: 1000;
+  box-sizing: border-box;
+}
+.nav-title {
+  font-weight: bold;
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+.nav-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e9e3d3;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: normal;
+  font-size: 14px;
+  border: 1px solid #8b5a2b;
+  transition: all 0.2s ease;
+}
+.nav-btn:hover {
+  background: #d4af37;
+  color: #2c1e16;
+  border-color: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(212, 175, 55, 0.3);
+}
+
+@media(max-width: 768px){
+  .nav-title { display: none; } /* Auf dem Handy Titel ausblenden, um Platz zu sparen */
+  .nav-links {
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 4px;
+  }
+}
+
+/* Karte - Sepia Filter für historischen Look */
+#map {
+  height: calc(100vh - 60px);
+  margin-top: 60px;
+}
+.leaflet-container {
+  /* Macht die Karte farblich passend zum Rest (Sepia-Look) */
+  filter: sepia(0.35) contrast(1.05) saturate(0.8);
+}
+#map.fullscreen {
+  height: 100vh !important;
+  margin-top: 0;
+}
+
+/* Sektionen (Pergament-Optik) */
+.section {
+  padding: 40px 30px;
+  max-width: 800px;
+  margin: 40px auto;
+  background: #fdfaf3;
+  color: #2c1e16;
+  border-radius: 4px;
+  border: 1px solid #d7ccc8;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+.section h2 {
+  color: #4e342e;
+  border-bottom: 2px solid #d4af37;
+  padding-bottom: 10px;
+  margin-top: 0;
+}
+.section.active {
+  background: #fffdf8;
+  border-color: #d4af37;
+}
+blockquote {
+  font-style: italic;
+  font-size: 1.1em;
+  border-left: 4px solid #8b5a2b;
+  background: #f5efe3;
+  padding: 15px 20px;
+  margin: 20px 0;
+  color: #3e2723;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+}
+ul { line-height: 1.6; }
+
+.search-box{
+  position:absolute;top:80px;left:50%;transform:translateX(-50%);
+  z-index:999;background:#fdfaf3;padding:10px;border:1px solid #8b5a2b;
+  border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.search-box input{padding:8px;width:260px;}
+.search-box button{padding:8px;}
+.game-card{text-align:center;}
+.game-card img{max-width:100%;height:220px;object-fit:cover;border:1px solid #8b5a2b;}
+
+</style>
+</head>
+
+<body>
+
+<nav class="navbar">
+  <div class="nav-title">Erinnerungswege</div>
+  <ul class="nav-links">
+    <li><a class="nav-btn" href="#map">Karte</a></li>
+    <li><a class="nav-btn" href="#zeitzeugin">Zeitzeugin</a></li>
+    <li><a class="nav-btn" href="#info">Das Projekt</a></li>
+    <li><a class="nav-btn" href="#about">Über uns</a></li>
+    <li><a class="nav-btn" href="#spiel">Spiel</a></li>
+    <li><a class="nav-btn" href="#quellen">Quellen</a></li>
+  </ul>
+</nav>
+
+<div id="map"></div>
+<div class="search-box">
+  <input id="streetSearch" placeholder="Straße eingeben, z.B. Klosterstraße">
+  <button onclick="findStreet()">Suchen</button>
+</div>
+
+<section id="zeitzeugin" class="section">
+  <h2>Aussage von Zeitzeugin</h2>
+  <blockquote>
+    „Ich erinnere mich noch genau an den Tag, als die Familie Simons abgeholt wurde.
+    Niemand wagte zu sprechen.“
+  </blockquote>
+  <p><strong>– Zeitzeugin Frau L., geboren 1925</strong></p>
+  <p>Ihre Erinnerungen bilden einen zentralen Baustein dieses Projekts und verleihen den bloßen Orten auf der Karte eine menschliche und emotionale Dimension. Die Straßenzüge von Bergheim verbergen viele solcher stillen Geschichten.</p>
+  
+  <hr style="margin:30px 0; border:1px solid #d4af37;">
+
+  <h3>Zeitzeuge aus Niederaußem (1945)</h3>
+  <blockquote>
+    „Durch den heftigen Beschuss mussten wir unser Dorf verlassen. Im Bethlehemer Wald gerieten wir zwischen die Fronten. Nach unserer Rückkehr waren viele Häuser zerstört oder geplündert.“
+  </blockquote>
+  <p><strong>– Franz Förster, 17 Jahre alt im Jahr 1945</strong></p>
+  <p>
+    Franz Förster war 17 Jahre alt, als amerikanische Truppen im März 1945 Niederaußem erreichten. Durch heftigen Beschuss mussten er und viele andere Bewohner ihr Dorf verlassen. Auf dem Weg nach Bergheim gerieten sie im Bethlehemer Wald zwischen die Fronten und erlebten die Schrecken des Krieges hautnah. Nach ihrer Rückkehr fanden sie viele Häuser zerstört oder geplündert vor. Für Franz blieb diese Zeit eine prägende Erinnerung und ein Zeichen dafür, wie wichtig Frieden ist.
+  </p>
+
+  <hr style="margin:30px 0; border:1px solid #d4af37;">
+
+  <h3>Zeitzeugin aus Bergheim</h3>
+  <blockquote>
+    „Sirenen und Explosionen gehörten zu unserem Alltag. Die Angst, ob unser Haus den nächsten Angriff überstehen würde, begleitete uns jeden Tag.“
+  </blockquote>
+  <p><strong>– Maria Schneider, 14 Jahre alt im Jahr 1945</strong></p>
+  <p>
+    Maria Schneider war 14 Jahre alt, als Bergheim 1945 von den letzten Kriegstagen erschüttert wurde. Sirenen und Explosionen gehörten zum Alltag. Oft musste sie mit ihrer Familie stundenlang im Keller ausharren. Besonders in Erinnerung blieb ihr die Angst, nicht zu wissen, ob das eigene Haus den nächsten Angriff überstehen würde.
+  </p>
+</section>
+
+<section id="info" class="section">
+  <h2>Über das Projekt</h2>
+  <p>
+    Im Rahmen unseres Schulprojekts haben wir eine interaktive Karte des Rhein-Erft-Kreises erstellt. Auf dieser Karte können verschiedene Orte ausgewählt werden, zu denen historische und aktuelle Bilder angezeigt werden.
+    Durch den Vergleich der Aufnahmen wird deutlich, wie stark sich Städte, Gebäude und Landschaften seit dem Zweiten Weltkrieg verändert haben. Die Website verbindet regionale Geschichte mit moderner Technik und macht historische Entwicklungen auf eine leicht verständliche Weise sichtbar.
+  </p>
+  <p>
+    Ziel des Projekts ist es, die Geschichte unserer Region lebendig darzustellen und das Interesse an der Vergangenheit des Rhein-Erft-Kreises zu fördern.
+  </p>
+</section>
+
+<section id="about" class="section">
+  <h2>Über uns</h2>
+  <p>
+     Wir sind Sebastian und Nico und besuchen die Q1 der Gesamtschule Bergheim. Im Rahmen eines Schulprojekts haben wir diese Website erstellt, um die Geschichte des Rhein-Erft-Kreises auf eine anschauliche und interaktive Weise darzustellen.
+     Dabei haben wir verschiedene Orte der Region recherchiert und historische Aufnahmen mit aktuellen Bildern verglichen. Unser Ziel war es, zu zeigen, wie sich diese Orte seit dem Zweiten Weltkrieg verändert haben und welche Auswirkungen die Ereignisse der Vergangenheit bis heute haben.
+  </p>
+  <p> 
+    Mit unserer Website möchten wir Geschichte verständlich und interessant vermitteln und den Besuchern einen neuen Blick auf die Entwicklung des Rhein-Erft-Kreises ermöglichen.
+  </p>
+</section>
+
+<section id="spiel" class="section">
+  <h2>Spiel: Welcher Ort ist das?</h2>
+  <div class="game-card">
+    <img id="quizImg" src="images/aachener_tor_then_user.jpeg" alt="Quiz Bild">
+    <p>Errate den Ort:</p>
+    <input id="guessInput" placeholder="Ort eingeben">
+    <button onclick="checkGuess()">Prüfen</button>
+    <p id="gameResult"></p>
+    <button onclick="nextQuestion()">Nächster Ort</button>
+  </div>
+</section>
+
+<section id="quellen" class="section">
+  <h2>Quellen & Archive</h2>
+  <p>Für die Erstellung dieser Website wurden verschiedene historische, wissenschaftliche und kartografische Quellen genutzt:</p>
+  <ul>
+    <li><strong>1. Stadt Bergheim – Stadtgeschichte:</strong><br><a href="https://www.bergheim.de" target="_blank">https://www.bergheim.de</a></li>
+    <li><strong>2. Bergheimer Geschichtsverein e. V.:</strong><br><a href="https://www.bergheimer-geschichtsverein.de" target="_blank">https://www.bergheimer-geschichtsverein.de</a></li>
+    <li><strong>3. Kölner Stadt-Anzeiger – Kriegsende im Rhein-Erft-Kreis:</strong><br><a href="https://www.ksta.de/region/rhein-erft" target="_blank">https://www.ksta.de/region/rhein-erft</a></li>
+    <li><strong>4. Deutsche Digitale Bibliothek (historische Bilder und Dokumente):</strong><br><a href="https://www.deutsche-digitale-bibliothek.de" target="_blank">https://www.deutsche-digitale-bibliothek.de</a></li>
+    <li><strong>5. Bundesarchiv (historische Fotos und Quellen):</strong><br><a href="https://www.bundesarchiv.de" target="_blank">https://www.bundesarchiv.de</a></li>
+    <li><strong>6. Wikipedia – Bergheim (Rhein-Erft-Kreis):</strong><br><a href="https://de.wikipedia.org/wiki/Bergheim_(Erft)" target="_blank">https://de.wikipedia.org/wiki/Bergheim_(Erft)</a></li>
+    <li><strong>7. Wikipedia – Rhein-Erft-Kreis:</strong><br><a href="https://de.wikipedia.org/wiki/Rhein-Erft-Kreis" target="_blank">https://de.wikipedia.org/wiki/Rhein-Erft-Kreis</a></li>
+    <li><strong>8. Geoportal NRW (Kartenmaterial):</strong><br><a href="https://www.geoportal.nrw" target="_blank">https://www.geoportal.nrw</a></li>
+    <li><strong>9. OpenStreetMap (Kartendarstellung):</strong><br><a href="https://www.openstreetmap.org" target="_blank">https://www.openstreetmap.org</a></li>
+    <li><strong>10. Zeitzeugenbericht „Das waren grauenvolle Tage“:</strong><br><a href="https://www.ksta.de/region/rhein-erft/bergheim/zweiter-weltkrieg-das-waren-grauenvolle-tage-155342" target="_blank">https://www.ksta.de/region/rhein-erft/bergheim/zweiter-weltkrieg-das-waren-grauenvolle-tage-155342</a></li>
+  </ul>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// Karte initialisieren
+const map = L.map('map').setView([50.952, 6.65], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19,
+  attribution:'© OpenStreetMap'
+}).addTo(map);
+
+// Marker Icon 
+const redIcon = L.icon({
+  iconUrl:'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
+  shadowUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize:[25,41],
+  iconAnchor:[12,41],
+  popupAnchor:[1,-34]
+});
+
+// Orte mit originalen Pfaden
+const places = [
+  {
+    title:"Bergheim — Klosterstraße",
+    lat:50.952959,
+    lng:6.638103,
+    thenImage:"images/klosterstr_then.jpeg",
+    nowImage:"images/klosterstr_now.jpeg",
+    thenLabel:"Damals",
+    nowLabel:"Heute",
+    desc:"Hier befand sich während der NS-Zeit das Haus einer jüdischen Familie.",
+    credit:"Historisches Bild: bereitgestelltes Material"
+  },
+  {
+    title:"Quadrath-Ichendorf — Familie Simons",
+    lat:50.935475,
+    lng:6.696756,
+    thenImage:"images/familiesimons_then.jpeg",
+    nowImage:"images/familiesimons_now.jpeg",
+    thenLabel:"Damals",
+    nowLabel:"Heute",
+    desc:"Letzter Wohnort der Familie Simons, deportiert 1942.",
+    credit:"Heute-Foto: bereitgestelltes Material"
+  },
+  {
+    title:"Bergheim — Aachener Tor",
+    lat:50.95274,
+    lng:6.63514,
+    thenImage:"images/aachener_tor_then_user.jpeg",
+    nowImage:"images/aachener_tor_now.jpg",
+    thenLabel:"Ansicht",
+    nowLabel:"Ansicht",
+    desc:"Historisches Stadttor und Wahrzeichen Bergheims.",
+    credit:"Damals-Bild: bereitgestelltes Material. Heute-Foto: Wikimedia Commons"
+  },
+  {
+    title:"Bergheim — Aachener Straße 11",
+    lat:50.95183,
+    lng:6.63692,
+    thenImage:"images/aachener_str_11_then.jpeg",
+    nowImage:"images/aachener_str_11_now.jpeg",
+    thenLabel:"Damals",
+    nowLabel:"Heute",
+    desc:"Historischer Erinnerungsort in der Aachener Straße 11.",
+    credit:"Fotos: bereitgestelltes Material"
+  },
+  {
+    title:"Bergheim Bahnhof",
+    lat:50.9559,
+    lng:6.6398,
+    thenImage:"images/bahnhof_then.jpeg",
+    nowImage:"images/bahnhof_now.jpg",
+    thenLabel:"Damals",
+    nowLabel:"Heute",
+    desc:"Der Bahnhof Bergheim hat sich über Jahrzehnte stark verändert.",
+    credit:"Heute-Foto: Raimond Spekking, CC BY-SA 4.0, via Wikimedia Commons"
+  },
+  {
+    title:"Schloss Paffendorf",
+    lat:50.964225,
+    lng:6.609444,
+    thenImage:"images/paffendorf_then.jpg",
+    nowImage:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/SchlossPaffendorf.jpg/250px-SchlossPaffendorf.jpg",
+    thenLabel:"Um 1860",
+    nowLabel:"Heute",
+    desc:"Das Schloss Paffendorf und seine Umgebung im Wandel der Zeit.",
+    credit:"Historisch: Sammlung Duncker, Public Domain. Heute: Wikimedia Commons"
+  },
+  {
+    title:"Bergheim — Giersbergstraße 2",
+    lat:50.94988,
+    lng:6.64041,
+    singleImage:"images/giersbergstr_2_thenafter.jpeg",
+    thenImage:"images/giersbergstr_2_thenafter.jpeg",
+    nowImage:"images/giersbergstr_2_thenafter.jpeg",
+    thenLabel:"Damals",
+    nowLabel:"Heute",
+    desc:"Ort des Erinnerns in der Giersbergstraße 2.",
+    credit:"Vergleichsbild: bereitgestelltes Material"
+  }
+];
+
+// Marker auf Karte setzen
+places.forEach(p => {
+  const imageHtml = p.singleImage ? `
+      <div class="single-compare">
+        <img class="single-img" src="${p.singleImage}" alt="Damals und Heute">
+        <div class="caption">Damals / Heute</div>
+      </div>
+  ` : `
+      <div class="popup-compare">
+        <div class="compare-col">
+          <img class="compare-img" src="${p.thenImage}" alt="Damals">
+          <div class="caption">${p.thenLabel || "Damals"}</div>
+        </div>
+        <div class="compare-col">
+          <img class="compare-img" src="${p.nowImage}" alt="Heute">
+          <div class="caption">${p.nowLabel || "Heute"}</div>
+        </div>
+      </div>
+  `;
+  const popup = `
+    <div class="popup-container">
+      <h4>${p.title}</h4>
+      ${imageHtml}
+      <div class="desc">${p.desc}</div>
+      <div class="credit">${p.credit}</div>
+    </div>
+  `;
+  L.marker([p.lat, p.lng], {icon:redIcon}).addTo(map).bindPopup(popup);
+});
+
+map.fitBounds(places.map(p => [p.lat, p.lng]), { padding: [40, 40] });
+
+// Navigation & Scroll-Funktionen
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    const id = btn.getAttribute('href').substring(1);
+    const section = document.getElementById(id);
+
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+    if(id === "map") {
+      map.getContainer().classList.add('fullscreen');
+      map.invalidateSize();
+      map.getContainer().scrollIntoView({behavior:"smooth"});
+    } else {
+      map.getContainer().classList.remove('fullscreen');
+      if(section) {
+        section.classList.add('active');
+        section.scrollIntoView({behavior:"smooth"});
+      }
+    }
+  });
+});
+
+// Straßensuche
+function findStreet(){
+  const term = document.getElementById('streetSearch').value.toLowerCase();
+  const p = places.find(x => x.title.toLowerCase().includes(term));
+  if(p){ 
+    map.setView([p.lat, p.lng], 17); 
+    map.getContainer().scrollIntoView({behavior:"smooth"});
+  } else { 
+    alert('Kein Ort gefunden'); 
+  }
+}
+
+// Quiz-Logik
+const quizPlaces = [
+  {name:"Klosterstraße", image:"images/klosterstr_then.jpeg"},
+  {name:"Familie Simons", image:"images/familiesimons_then.jpeg"},
+  {name:"Aachener Tor", image:"images/aachener_tor_then_user.jpeg"},
+  {name:"Aachener Straße", image:"images/aachener_str_11_then.jpeg"},
+  {name:"Bahnhof", image:"images/bahnhof_then.jpeg"},
+  {name:"Schloss Paffendorf", image:"images/paffendorf_then.jpg"},
+  {name:"Giersbergstraße", image:"images/giersbergstr_2_thenafter.jpeg"}
+];let currentQuiz = 0;
+
+function nextQuestion(){
+  currentQuiz = Math.floor(Math.random() * quizPlaces.length);
+  document.getElementById('quizImg').src = quizPlaces[currentQuiz].image;
+  document.getElementById('gameResult').innerText = '';
+  document.getElementById('guessInput').value = '';
+}
+
+function checkGuess(){
+  const g = document.getElementById('guessInput').value.toLowerCase().trim();
+  const a = quizPlaces[currentQuiz].name.toLowerCase();
+  if(g.includes(a.split(' ')[0])) {
+    document.getElementById('gameResult').style.color = "green";
+    document.getElementById('gameResult').innerText = 'Richtig!';
+  } else {
+    document.getElementById('gameResult').style.color = "red";
+    document.getElementById('gameResult').innerText = 'Leider falsch. Gesucht: ' + quizPlaces[currentQuiz].name;
+  }
+}
+
+// Startet das erste Quiz beim Laden der Seite
+nextQuestion();
+</script>
+
+</body>
+</html>
+
+```

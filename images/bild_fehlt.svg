@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540" role="img" aria-labelledby="title desc">
+  <title id="title">Bild fehlt</title>
+  <desc id="desc">Platzhalter fuer ein noch fehlendes Ortsbild</desc>
+  <rect width="900" height="540" fill="#f5efe3"/>
+  <rect x="26" y="26" width="848" height="488" rx="10" fill="#fdfaf3" stroke="#8b5a2b" stroke-width="4"/>
+  <path d="M255 360h390l-118-142-82 96-54-62z" fill="#d7ccc8"/>
+  <circle cx="315" cy="190" r="44" fill="#d4af37"/>
+  <text x="450" y="405" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="38" fill="#4e342e">Bild folgt</text>
+  <text x="450" y="452" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="24" fill="#795548">Noch kein passendes frei nutzbares Foto gefunden</text>
+</svg>
